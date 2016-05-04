@@ -47,6 +47,8 @@ The field ```data-src``` is a required attribute and the container size is deter
 The id is useful as a selector to initialize, but you could have an army of cropMe instances, if you want.  Why you would ever need multiple on a same page is beyond me.  I wrote this package because I want to use one and "replace" the source URL.
 The field ```data-preview``` is optional as a target for one or more preview panes showing the cropBox content.
 
+```position: relative;``` is not required per se, but the jquery plugin will force it to be position: relative ... this is so that we can have absolute elements within ...
+
 <HR />
 Finally the initiation as a SCRIPT somewhere in the page ... (after jquery hopefully)
 ```
