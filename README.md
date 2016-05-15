@@ -3,6 +3,22 @@
 <p>A "simple" jQuery image cropping plugin.</p>
 </blockquote>
 
+## Update
+
+See http://cropMe.mshaffer.com/ for example, demos, and details.
+
+1.  A client-side cropping tool should prepare cropping images
+	- The tool should enable the user to manipulate an original image
+	- The tool should enable the user to preview the final 'cropped' form of the original image
+	- The tool should offer support for keyboard, mouse, and text data entry
+2.  A client-side cropping tool should be precise
+	- The accuracy of the final crop coordinates is of upmost importance
+	- The ability to quickly 'tweak' coordinates is essential
+	- The ability to visualize the final 'cropped form' is important
+3.  A client-side cropping tool should be extensible
+	- The tool should be designed to allow for image replacement 
+	- The tool should return the final 'cropped' dimensions after every cropping-related movement
+	- The tool should easily hackable
 
 <pre><code>dist/
 ├── cropme.css
