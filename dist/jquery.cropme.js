@@ -1,12 +1,12 @@
 /*!
- * cropMe v0.8.0
+ * cropMe v0.8.1
  * https://github.com/MonteShaffer/cropMe
  *
  * Copyright (c) 2016 Monte J. Shaffer
  * mshaffer @ mshaffer.com
  * Released under the MIT license
  *
- * Date: 2016-05-16
+ * Date: 2016-05-17
  */
 if ( typeof Object.create !== 'function' ) {
 	Object.create = function( obj ) {
@@ -37,8 +37,6 @@ if ( typeof Object.create !== 'function' ) {
 	var SUPPORT_CANVAS = $.isFunction($('<canvas>')[0].getContext);
 	var IS_SAFARI = navigator && /safari/i.test(navigator.userAgent) && /apple computer/i.test(navigator.vendor);
 	// Globals
-	var _dragData = { original: {x1:0, y1:0, x2:0, y2:0, w:0, h:0}, scaled: {x1:0, y1:0, x2:0, y2:0, w:0, h:0} }; // initial values, updating values get stored with [self.] ...
-	var _myPoints = {data:{}, sub:{}, direction:[], xmin:[],xmax:[],ymin:[],ymax:[]};
 	var _zIndex = 99;
 	var _zIncrement = 3;
 	var transparentImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAAA3NCSVQICAjb4U/gAAAABlBMVEXMzMz////TjRV2AAAACXBIWXMAAArrAAAK6wGCiw1aAAAAHHRFWHRTb2Z0d2FyZQBBZG9iZSBGaXJld29ya3MgQ1M26LyyjAAAABFJREFUCJlj+M/AgBVhF/0PAH6/D/HkDxOGAAAAAElFTkSuQmCC';
@@ -149,11 +147,15 @@ if ( typeof Object.create !== 'function' ) {
 			'</div>' +
 			'<!-- right controls are for the crop box //-->' +
 			'<div class="cropMe-right-controls">		' +	
-					'<!-- crop highlight toggle //-->' +
-					'<div class="cropMe-inline-control">	' +							
-							'<!-- toggle inline controls //-->' +
-							'<span id="{myID}-box-toggle-controls" class="cropMe-boxToggleControls cropMe-actionable cropMe-left-center" data-status="Turn on/off the inline controls to adjust the crop box.">' + // Double-click will also work.
-								'<i class="fa fa-toggle-on fa-flip-horizontal" aria-hidden="true" style="color: red;"></i>' +
+					'<div class="cropMe-inline-control">	' +		
+						'<!-- toggle inline controls //-->' +
+						'<!-- crop highlight toggle //-->' +
+							'<span id="{myID}-box-toggle-controls" class="cropMe-boxToggleControls cropMe-actionable cropMe-center-top" data-status="Turn on/off the inline controls to adjust the crop box [Toggle cropping and cropped].">' + 
+								'<i class="fa fa-toggle-on fa-flip-horizontal" aria-hidden="true" style="color: grey;"></i>' +
+							'</span>' +
+						'<!-- toggle aspect ratio //-->' +
+							'<span id="{myID}-box-toggle-ratio" class="cropMe-boxToggleRatio cropMe-actionable cropMe-center-bottom" data-status="Turn on/off the locking of an aspect ratio (If unlocked, Cntrl-drag will still constrain aspect ratio).">' + 
+								'<i class="fa fa-unlock" aria-hidden="true"></i>' +
 							'</span>' +
 					'</div>' +
 					'<!-- crop box [move] //-->' +
@@ -396,6 +398,7 @@ if ( typeof Object.create !== 'function' ) {
 			
 			self.currentImage = false;
 			self.finalPrepared = false;
+			
 			self.hasInitialized = false;
 //console.log("READY: " + self.isReady());
 			self.zoomActivate = true;  // zoomTo or just calculate ... 
@@ -419,14 +422,16 @@ if ( typeof Object.create !== 'function' ) {
 				
 			self.zIndex = _zIndex;  
 			self.zIncrement = _zIncrement; 
-			self.myPoints = _myPoints;  // data of points [history]
+			self.myPoints = resetObject("myPoints");  // data of points [history]
 //console.log(_myPoints);
 //console.log(self);
-			self.dragData = _dragData; // initial empty values ...
+			self.dragData = resetObject("dragData"); // initial empty values ...
 			self.dragDataBackup = {};
-			self.dragDataBackup["initial"] = _dragData;			
+		self.dragDataBackup["initial"] = resetObject("dragData");			
 			self.zoomHistory = {};
 			self.boxRatio = false;
+			self.maintainAspectRatio = false;
+			self.forceAspectRatio = false;
 			self.boxAction = "crop";  // move-image, move-box, move-point
 			self.toggleBoxControls	= "edges";  // or none
 							
@@ -613,8 +618,11 @@ self.cssFunctions("#"+self.myID+"-controls-interface","console",false);
 						createLayers: function( ) {
 								var self = this;	
 								// TEMPLATE [background image with transparency]
-								self.$template = $template = $(TEMPLATE);
-								self.$elem.append( self.$template );
+								//self.$template = $template = $(TEMPLATE);
+								$template = $(TEMPLATE);
+								self.$elem.append( $template );
+								self.$template = self.$elem.find("DIV.cropMe-container");
+//console.log(self.$template);
 								
 						// APPEND CONTROLS TO THE DOCUMENT... 
 							
@@ -1266,7 +1274,7 @@ if(self.hasBox)
 			var self = this;
 				if(self.isResizingBox)
 					{
-					//console.log(e);
+//console.log(e);
 					self.movingPoint._x2 = self.movingPoint.x2 = e.pageX; // only the delta matters ...
 					self.movingPoint._y2 = self.movingPoint.y2 = e.pageY; // only the delta matters ...
 				
@@ -1328,7 +1336,7 @@ if(self.hasBox)
 					{
 					if(!isUndefined(self.movingBackground)) // timeout delay may trigger error ...
 						{
-						//console.log(e);
+//console.log(e);
 						self.movingBackground.x2 = e.pageX; // only the delta matters ...
 						self.movingBackground.y2 = e.pageY; // only the delta matters ...
 										
@@ -1547,7 +1555,7 @@ if(self.hasBox)
 									var d = computeDirection(self.boxAction);
 									self.startMovePoint(e,d);
 									message = "[move-point] ["+d+"] starting ... ";
-									if(self.maintainAspectRatio)
+									if(self.maintainAspectRatio || self.forceAspectRatio)
 										{
 										message += " ASPECT RATIO LOCKED";
 										}
@@ -1609,7 +1617,7 @@ self.doMessage(message);
 									var d = computeDirection(self.whatIsDragging);
 									self.dragMovePoint(e,d);
 									message = "[move-point] ["+d+"] dragging ... ";
-									if(self.maintainAspectRatio)
+									if(self.maintainAspectRatio || self.forceAspectRatio)
 										{
 										message += " ASPECT RATIO LOCKED";
 										}
@@ -1674,7 +1682,11 @@ self.doMessage(message);
 		startCrop: function ( e ) {
 			var self = this;
 				self.isDrawingBox = true;
-				self.dragData = _dragData;
+				self.dragData = resetObject("dragData");
+				
+//console.log("reset");
+//console.log(self.dragData);
+
 				self.drawCoords = {x1:0, y1:0, x2:0, y2:0};
 					// coordinates on page ... 
 					var ex = e.pageX;  // no scrolling offset ... [REALLY?]
@@ -1972,7 +1984,8 @@ console.log("REALLY BAD!")
 //console.log("buildPoints->monte");
 //console.log(_myPoints);
 //console.log(self.myPoints);
-				self.myPoints = _myPoints;  // reset ... 
+				self.myPoints = resetObject("myPoints");  // reset ... 
+				/*
 				// should reset, but is not, so
 					_myPoints.direction.length = 0;
 					_myPoints.xmin.length = 0;
@@ -1981,6 +1994,8 @@ console.log("REALLY BAD!")
 					_myPoints.ymax.length = 0;
 //console.log(_myPoints);
 				self.myPoints = _myPoints;
+				*/
+//console.log("reset");
 //console.log(self.myPoints);
 				var obj = $("#"+self.myID+" SPAN.cropMe-point.point-nw");
 					obj.css({"position": "absolute", "z-index": self.zIndexEdges});
@@ -2112,7 +2127,24 @@ console.log("REALLY BAD!")
 			},
 		
 		
-		
+		toggleRatio: function(force=false) {
+			var self = this;
+				var state = self.forceAspectRatio;
+				var toggle = $("#"+self.myID+"-box-toggle-ratio");
+					var t = toggle.find($(".fa"));
+					
+				if(state) // aspect ratio is on, let's turn it off
+					{
+					t.removeClass("fa-lock").addClass("fa-unlock");
+					self.forceAspectRatio = false;
+					}
+					else 
+						{
+						t.removeClass("fa-unlock").addClass("fa-lock");
+						self.forceAspectRatio = true;
+						}		
+			return self;
+			},	
 		togglePoints: function(force=false) {
 			var self = this;
 				var toggle = $("#"+self.myID+"-box-toggle-controls");
@@ -2140,7 +2172,7 @@ console.log("REALLY BAD!")
 							
 							
 							
-							t.css({"color": "red"});								
+							t.css({"color": "grey"});								
 							self.hidePoints();
 							self.toggleBoxControls = "none";
 							}
@@ -2169,7 +2201,7 @@ console.log("REALLY BAD!")
 							
 							case "off":
 								t.removeClass("normal").addClass("fa-flip-horizontal");
-								t.css({"color": "red"});								
+								t.css({"color": "grey"});								
 								self.hidePoints();
 								self.toggleBoxControls = "none";
 							break;
@@ -2436,7 +2468,7 @@ console.log("REALLY BAD!")
 					self.updateConsole();
 								
 console.log("smartZoom");
-console.log(self);
+//console.log(self);
 			return self;
 			},
 			
@@ -3103,6 +3135,12 @@ console.log(self);
 					 self.togglePoints();
 					});
 					
+			var obj = $("#"+self.myID+"-box-toggle-ratio");
+				 obj.click(function(){
+					 self.toggleRatio();
+					});
+					
+					
 			var obj = $("#"+self.myID+"-toggle");  // this toggles the entire modal
 				 obj.click(function(){
 					var toggle = $(this);
@@ -3343,7 +3381,7 @@ self.doMessage(message);
 			var self = this;
 				if(key == "") { key = getMilliseconds(); } else { key = "" + getMilliseconds() + "-" + key; }
 				self.dragDataBackup[key] = self.dragData;
-				self.dragData = _dragData; // reset the data ... with x1, x2, y1, y2, w, h
+				self.dragData = resetObject("dragData"); // reset the data ... with x1, x2, y1, y2, w, h
 					if(!isset(data.x2)) { data.x2 = data.x1 + 100; } // some arbitrary number
 					if(!isset(data.y2)) { data.y2 = data.y1 + 150; } // some arbitrary number
 					if(!isset(data.w)) { data.w = Math.abs(data.x2 - data.x1); }
@@ -3365,8 +3403,9 @@ self.doMessage(message);
 						drawBox:  function(data) {
 								var self = this;
 //console.log(data);
-									self.dragData = _dragData; // reset the data ... 
-//console.log(_dragData);
+									self.dragData = resetObject("dragData"); // reset the data ... 
+
+
 										var x2 = data.left + data.width;
 										var y2 = data.top + data.height;
 									var obj = {x1: data.left, x2: x2, y1: data.top, y2: y2, h: data.height, w: data.width};	
@@ -3415,12 +3454,88 @@ self.doMessage(message);
 				self.dragData.scaled.y2 = self.dragData.scaled.y1 + self.dragData.scaled.h;
 			return self;
 			},
-							
-		destroy: function () {
+			
+		show: function( preview=true ) {
 			var self = this;
-				self.$elem.remove();
+				if(preview && isset(self.previewInfo))
+						{
+						$.each(self.previewInfo.elements, function(i,value){
+								if(isset(value.fobj)) { value.fobj.show(); }
+							});
+						}
+					
+				if(isset(self.$box)){ self.$box.show(); }
+				if(isset(self.$controls)){ self.$controls.show(); }
+				if(isset(self.$template)){ self.$template.show(); }
+				if(isset(self.$elem)){ self.$elem.show(); }
+			return self;
+			},
+			
+		hide: function( preview=true ) {
+			var self = this;
+				if(preview && isset(self.previewInfo))
+						{
+						$.each(self.previewInfo.elements, function(i,value){
+								if(isset(value.fobj)) { value.fobj.hide(); }
+							});
+						}
+						
+				if(isset(self.$box)){ self.$box.hide(); }
+				if(isset(self.$controls)){ self.$controls.hide(); }
+				if(isset(self.$template)){ self.$template.hide(); }
+				if(isset(self.$elem)){ self.$elem.hide(); }
+			return self;
+			},
+							
+		destroy: function (selector) {
+			var self = this; 
+				// empty DOM ... 
+				if(isset(self.previewInfo))
+					{
+					$.each(self.previewInfo.elements, function(i,value){
+							if(isset(value.fobj)) { value.fobj.remove(); }
+						});
+					}
+						
+					if(isset(self.$controls)) 	{ self.$controls.remove(); }
 					if(isset(self.$box)) 		{ self.$box.remove(); }
-					if(isset(self.$console)) 	{ self.$console.remove(); }
+					// inside box
+					/*
+					if(isset(self.$crop)) 		{ self.$crop.remove(); }
+					if(isset(self.$dragborder))	{ self.$dragborder.remove(); }
+					if(isset(self.$pseudo))		{ self.$pseudo.remove(); }
+					*/
+					
+					if(isset(self.$template))	{ self.$template.remove(); }
+					
+				
+				self.$elem.empty(); // don't remove ... 
+				
+				/*
+				
+				if(bg.parent().length == 0) {
+				   // removed succesfully
+				} else {
+				   // still somewhere in the dom
+				}
+				bg = null;
+				*/
+					
+				//$(self).remove(); 				
+				//$(self).removeData();
+					self.$box.removeData();
+					self.$controls.removeData();
+					self.$template.removeData();
+					
+			//self.$elem.removeData(NAMESPACE);
+			self.$elem.removeData();
+				//$(this).data(NAMESPACE, (data = $.data( this, NAMESPACE, instance )));
+				//$(self).removeData(NAMESPACE);
+				//$(this).data(NAMESPACE) = null;
+					
+				self = null;
+				
+				//console.log(self);
 			return self;
 			}
 			
@@ -3430,30 +3545,42 @@ self.doMessage(message);
 	$.fn.cropMe = function( option ) {
 		var args = toArray(arguments, 1);
 		var result;
+		var notInitialized;
 		this.each(function() {  // allows for multiple
 			var data = $(this).data(NAMESPACE);
+//console.log("data: ");
+//console.log(data);
 			var fn;
 			var stringOption = (typeof option === 'string');
-			var callFunction = (typeof option === 'string' && $.isFunction(fn = data[option]));
+			notInitialized = (stringOption && isUndefined(data));
+				if(notInitialized) { return undefined; } // hasn't been initialized ... only for this element of the .each
+			
+			var callFunction = (stringOption && $.isFunction(fn = data[option]));
+			
 //console.log("callFunction: "+callFunction);
 			var options;
 //console.log(data);		
 			if (!data) 
 				{
 //console.log("CREATING DATA");
+				/*
 				if (/destroy/.test(option)) 
 					{
 					// we are destroying it ... why not...
 					return;
-					}	 
+					}
+				*/
 				
 				if(!stringOption){options = option;}
 				var instance = Object.create( cropMe );
 					instance = instance.init( options, this );
-				$(this).data(NAMESPACE, (data = $.data( this, 'cropMe', instance )));
+				$(this).data(NAMESPACE, (data = $.data( this, NAMESPACE, instance )));
 				}
 //			data = $(this).data(NAMESPACE);
-//console.log(data);				
+//console.log(data);		
+//console.log("data2: ");
+//console.log(data);			
+			
 				if (callFunction) 
 					{
 //console.log(args);
@@ -3462,6 +3589,7 @@ self.doMessage(message);
 //console.log(result);
 					}
 		});
+		if(notInitialized) { return undefined; }
 		return isUndefined(result) ? this : result;
 	};
 /*
@@ -3557,31 +3685,45 @@ onComplete: $.noop,
 			//var ratio = data.w / data.h; // data is changing everytime ... 
 			var ratio = self.movePointRatio;
 //console.log("ratio: " + ratio + " dx: " + dx + " dy: " + dy);
+			if(ratio > 1) { var dx_ = dy * ratio; } else { var dy_ = dx / ratio; }
+			if(ratio > 1) { var _dx = -1*dy * ratio; } else { var _dy = -1*dx / ratio; }
+					
+		// biased to south and east ... 
+		if(self.maintainAspectRatio || self.forceAspectRatio)
+			{
 			switch(d)
 				{
 				case "nw":
 				case "se":
-					if(self.maintainAspectRatio)
-						{
-						if(ratio > 1) { dx = dy * ratio; } else { dy = dx / ratio; }
-						} 
+				case "s":
+				case "e":
+						if(ratio > 1) { dx = dx_; } else { dy = dy_; }
 				break;
 				
 				case "ne":				
 				case "sw":
-					if(self.maintainAspectRatio)
-						{
-						if(ratio > 1) { dx = -1*dy * ratio; } else { dy = -1*dx / ratio; }
-						}
+				case "n":
+				case "w":
+						if(ratio > 1) { dx = _dx; } else { dy = _dy; }
 				break;
 				
 				
 				}
+			}
+
 			switch(d)
 				{
 				case "n":
 					data.y1 += dy;
 					data.h 	-= dy;
+					
+					//"e"
+					if(self.maintainAspectRatio || self.forceAspectRatio)
+						{
+						data.x2 += dx;
+						data.w 	+= dx;
+						data.x1 = data.x2 - data.w;
+						}
 				break;
 				
 				case "nw":
@@ -3605,6 +3747,14 @@ onComplete: $.noop,
 					data.y2 += dy;
 					data.h 	+= dy;
 					data.y1 = data.y2 - data.h;
+					
+					//"e"
+					if(self.maintainAspectRatio || self.forceAspectRatio)
+						{
+						data.x2 += dx;
+						data.w 	+= dx;
+						data.x1 = data.x2 - data.w;
+						}
 				break;
 				
 				case "sw":
@@ -3627,11 +3777,27 @@ onComplete: $.noop,
 				break;
 				
 				case "w":
+					// "s"
+					if(self.maintainAspectRatio || self.forceAspectRatio)
+						{
+						data.y2 += dy;
+						data.h 	+= dy;
+						data.y1 = data.y2 - data.h;
+						}
+						
 					data.x1 += dx;
-					data.w 	-= dx;
+					data.w 	-= dx; 
 				break;
 									
 				case "e":
+					// "s"
+					if(self.maintainAspectRatio || self.forceAspectRatio)
+						{
+						data.y2 += dy;
+						data.h 	+= dy;
+						data.y1 = data.y2 - data.h;
+						}
+					
 					data.x2 += dx;
 					data.w 	+= dx;
 					data.x1 = data.x2 - data.w;
@@ -3640,6 +3806,21 @@ onComplete: $.noop,
 			return data;
 			}	
 			
+	function resetObject(which="dragData")
+		{
+		// weird "rhs" assignment of objects within self/return self setup...
+		// or maybe just a console.log bug, browser can't return value before changed...
+		switch(which)
+			{
+			default:
+				return { original: {x1:0, y1:0, x2:0, y2:0, w:0, h:0}, scaled: {x1:0, y1:0, x2:0, y2:0, w:0, h:0} }; // initial values, updating values get stored with [self.] ...
+			break;
+			
+			case "myPoints":
+				return {data:{}, sub:{}, direction:[], xmin:[],xmax:[],ymin:[],ymax:[]};
+			break;
+			}
+		}
 	function computeSwitch(str)
 		{
 		if(empty(str)) { return ""; }
