@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="Generator" content="EditPlus®">
+  <meta name="Author" content="monte.shaffer@gmail.com">
+  <title>cropMe Preview</title>
+<SCRIPT>
+// crop info
+var x1 = 100; var y1 = 200; var w = 300; var h = 400;
+// image info
+var image = "http://cropMe.mshaffer.com/images/test-grid.gif"; var iw = 1022; var ih = 1024; 
+// style info
+var bg = "black";
+var get;
+
+function appendHtml(el, str) 
+	{
+	var div = document.createElement('div');
+		div.innerHTML = str;
+	while (div.children.length > 0) 
+		{
+		el.appendChild(div.children[0]);
+		}
+	}
+function placePreview()
+	{
+	getVARS(); // will overwrite default values ... 
+		document.body.style.backgroundColor = bg;
+	var str = '<div id="preview" style="position: absolute; top: 0px; left: 0px; background-color: white; background-image: url('+image+'); background-repeat: no-repeat; background-position: '+(-1*x1)+'px '+(-1*y1)+'px; background-size: '+iw+'px '+ih+'px; width: '+w+'px; height:'+h+'px;"></div>';
+	appendHtml(document.body, str);
+	}
+function getVARS()
+	{
+	var myIndex=document.URL.indexOf('?');
+	if(myIndex!=-1)
+		{
+		var pairs=document.URL.substring(myIndex+1,document.URL.length).split('&');
+		for(var i=0;i<pairs.length;i++)
+			{
+			nameVal=pairs[i].split('=');
+			if(nameVal[0])
+				{
+				eval(decodeURI(nameVal[0])+" = '"+decodeURI(nameVal[1])+"';");
+				}
+			}
+		}
+	}
+</SCRIPT>
+</head>
+ <body onload="placePreview();">
+ </body>
+</html>
