@@ -2435,14 +2435,34 @@ console.log("REALLY BAD!")
 			},
 			
 		getVariable: function(key) {
+console.log("getVariable");
 				var self = this;
 				var myReturn = null;
+console.log("key: " + key);
 				eval("var myReturn = self."+key+";");
+console.log("myReturn: ");
+console.log(myReturn);
 			return myReturn;
 			},
 		setVariable: function(key,value) { // can be string or object/array ... what about function?
+console.log("setVariable");
 				var self = this;
-					myValue = (isString(value)) ? "'" + value.split("'").join("\'") + "'" : value;
+console.log("key: " + key);
+console.log("value: " + value); // only do parse if it has at least one { or [ 
+//console.log(JSON.parse(value));  // apply JSON.parse to objects ... 
+				var parsed = false;
+				var idx = value.indexOf("{"); // object
+				if(idx == 0){ value = JSON.parse(value); parsed = true;}
+	//console.log(idx);
+				if(!parsed)
+				{
+				var idx = value.indexOf("["); // array
+				if(idx == 0){ value = JSON.parse(value);}
+				}
+				
+	//console.log(idx);			
+					if(!isNull(booleanCheck(value))) { myValue = booleanCheck(value); } else if(validNumber(value)) { myValue = parseFloat(value); } 
+					else if(isString(value)) { myValue = "'" + value.split("'").join("\'") + "'" } else { myValue = value; }
 				eval("self."+key+" = "+myValue+";");
 			return self;
 			},
@@ -4218,10 +4238,17 @@ onComplete: $.noop,
 		{
 		return new Date().getTime();
 		}
-	function validNumber(myNumber)
+	function validNumber(str)
 		{
-		myTest = !(isNaN(myNumber-0));
+		myTest = !(isNaN(str-0));
 		return myTest;
+		}
+	function booleanCheck(str)
+		{
+		str = trim(str).toLowerCase();
+			if(str === 'true'){ return true; }
+			if(str === 'false'){ return false; }
+		return null;			
 		}
 	function isFunction(a) 
 		{
