@@ -97,46 +97,74 @@ Here are the current default options for the plugin.
 $.fn.cropMe.options = {
 				enable: {
 						wheelZoom: true, // can you zoom with the 3rd mouse button (the wheel)
-						cntrlZoom: true, // after mousing over a container, you can use CNTRL- and CNTRL+ to zoom
-						arrowsMoveBox: true, 
-						cntrlArrowsMoveSide: true,
-						toggleDragMode: true		// Toggle drag mode between "crop" and "move" when click twice on the cropper
+						consoleLog:  true,  // messages displayed within the tool will also be displayed in the console.log						
+						arrowMove: true // move image with arrows , or a side of a box (n,s,e,w)
 						},
 				timeout: {
-						refreshImage: 1000, // in milliseconds
-						wheelCapture: 250 // milliseconds: limit wheel speed to prevent zoom too fast
-						},
+						refreshImage: 1000, // in milliseconds						
+						toggleControls: 250,  // toggling what controls are displayed
+						wheelCapture: 250, // milliseconds: limit wheel speed to prevent zoom too fast 
+						//messageLife:  25000, // milliseconds before fades away (unless replaced)...
+						showHideCropBox: 1000 // milliseconds for fadeIn, fadeOut
+						}, 
 				methods: {
-						onImageLoad: function() {},  // custom function ... 
+						beforeImageLoad: function() {},  // custom function ... [self]
+						pluginReady: function() {},  // custom function ... [self] ... layers have been created ... 
+						onImageLoad: function() {},  // custom function ... [self]
+						onCropFinish: function() {},  // custom function ... [self]
+						onFinalPreparation: function() {},  // custom function ... [self] 
 						},
 				zoom:	{
-						initial: "0.15, center center",  // values are "Fit", "FitV", "FitV, center center", "FitH", "FitH, center center" where center center can be {left,center,right} {top,center,bottom} or {10px 10px} based on the position within the container (scaled units)
+						initial: "Fit",
+						//initial: "0.23",  // values are "Fit", "FitV", "FitV, center center", "FitH", "FitH, center center" where center center can be {left,center,right} {top,center,bottom} or {10px 10px} based on the position within the container (scaled units)
 										// can also numeric as a ratio "1" or "0.85, center center"
 										// extra elements default to "center center"
-						min: 0,			// can be a ratio ... will limit the zoom to this amount 
+						min: 0.05,			// can be a ratio ... will limit the zoom to this amount 
 						max: false,		// can be a ratio ... will limit the zoom to this amount [false means no limit]
-						wheel:  0.1,	// ratio if wheelZoom is true
-						cntrl:  0.1		// ratio of cntrlZoom is true						
+						wheel:  0.1	// ratio if wheelZoom is true
+						}, 
+				preview: {
+						windowOpenParams: "width=800,height=600, left=100,top=100, toolbar=no, status=no, scrollbars=yes, location=yes, resizable=yes, menubar=no", 
+						windowFocus: false,  // if true, popup window will focus 
+						windowOpenStyle: {"bg":"black"}
 						},
 				box:	{
-						// Show the black modal
-						modal: true,
-						// Show the dashed lines for guiding
-						guides: true,
-						// Show the center indicator for guiding
-						center: true,
-						// Show the white modal to highlight the crop box
-						highlight: true,
-						// units can be absolute or scaled [container] ... move from 0,0 top/left
-						autoMove: true,
-						autoMoveInfo: {units:"absolute","x":50,"y":50},  // moves the background image right 50px and down 50px where 50px is based on the actual image size
+						color: "green",  	// background-color of "modal"
+						opacity: 0.75,		// opacity of "modal"
+						padding:  5,  // number of pixels (in container scaled units) to pad the box (this box goes over the top of the image container, acting as a modal, and extends beyond the image container ... if the corners of the cropping region are outside the container, on the edge, we can still drag them ... also enables us to have bindings of this modal layer different than the container layer ... mouseover, etc.)
+						border: 1, // number of pixels for the crop-box border ... 
+						corner:  5,  // number of pixels (in container scaled units) for each drag option ... this will be positioned at each of the 8 locations.
+						tolerance: 10, // number of pixels (in container scaled units) from one of these 8 points or a edge line to be considered "arrived" for binding action ... 						
+						// units can be original or scaled [container] ... move from 0,0 top/left
+						autoPlace: true,
+						autoPlaceInfo: {units:"original","x":-75,"y":-450},  // at current zoom, places the background on original position coordinates
+						autoMove: false,  // move after it is placed
+						autoMoveInfo: {units:"original","x":75,"y":500},  // moves the background image right 50px and down 50px where 50px is based on the actual image size
 						// Enable to show the crop box automatically when initialize
-						autoCrop: true,
-						autoCropInfo: {units:"absolute","top":50,"left":50,"width":500,"height":500}
-						},				
-				nudge:	{	// pixels or percentage (of the container, not the actual image) 
-						moveBox: 10,	// amount if arrowsMoveBox is true
-						moveSide: "5%"	// amount if cntrlArrowsMoveSide is true
+						autoCrop: false,
+						autoCropInfo: {units:"original","top":100,"left":100,"width":500,"height":500}
+						},	
+				console: {  // currently at least 600px wide ... width is based on modal overlay ... max-height is 300px
+							showControls:  true, 							
+							controlPosition:  "bottom",  // top or bottom [TODO: top]
+							autoOpen: true,  // show the controls on build ... 						
+							openImageInfo:  false,  // if autoOpen is true, this will also auto open
+							openBoxInfo:  false, // if autoOpen is true, this will also auto open
+							backgroundColor: "white",
+							imageBackgroundColor: "#eeeeee",
+							boxBackgroundColor: "#cccccc",
+							textColor: "black",							
+							border: 5,
+							heightOpen: 300, // -66 for each "info" row ...
+							heightClosed: 25,
+							borderColor: "black",
+							zoom:  0.1,  // ratio
+							moveImage:  10,  // pixels of true image 
+							moveCrop:  10,  // pixels of crop box (in container units)
+							moveCropEdge:  10,  // pixels of crop box (in container units)
+							clickShift:  2,		// factor of zoom/move if "shift" key is held down with the click on the arrow
+							clickCntrl:  0.5,   // factor of zoom/move if "control" key is held down with the click on the arrow
+							clickAlt:  .1		// factor of zoom/move if "alt" key is held down with the click on the arrow
 						}
 			};
 ```
