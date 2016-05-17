@@ -6,7 +6,7 @@
  * mshaffer @ mshaffer.com
  * Released under the MIT license
  *
- * Date: 2016-05-17
+ * Date: 2016-05-17 
  */
 if ( typeof Object.create !== 'function' ) {
 	Object.create = function( obj ) {
