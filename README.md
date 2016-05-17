@@ -3,7 +3,7 @@
 <p>A "simple" jQuery image cropping plugin.</p>
 </blockquote>
 
-*Note:*  This is NOT my first rodeo developing tools (not toys), but my mindset is about functionality, not form.  So if you are a JQUERY PLUGIN guru or a CSS guru or a Micro$oft IE hacker or a GITHUB enthusiast, I would love for you to help make this tool even more robust.
+*Note:*  This is NOT my first rodeo developing tools (not toys), but my mindset is about functionality, not form.  This IS my first time developing a JQUERY PLUGIN (Google, StackOverflow, JSFiddle, and so on have made this possible).  So if you are a JQUERY PLUGIN guru or a CSS guru or a Micro$oft IE hacker or a GITHUB enthusiast, I would love for you to help make this tool even more robust.
 
 ## Update
 
