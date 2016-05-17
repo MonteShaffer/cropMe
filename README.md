@@ -3,6 +3,8 @@
 <p>A "simple" jQuery image cropping plugin.</p>
 </blockquote>
 
+*Note:*  This is NOT my first rodeo developing tools (not toys), but my mindset is about functionality, not form.  So if you are a JQUERY PLUGIN guru or a CSS guru or a Micro$oft IE hacker or a GITHUB enthusiast, I would love for you to help make this tool even more robust.
+
 ## Update
 
 See http://cropMe.mshaffer.com/ for example, demos, and details.  The website-demo.zip file has all of the files for the demo (including font-awesome and php backend examples of ajax crop, crop-resize, crop-rotate).
