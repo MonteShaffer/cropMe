@@ -5,7 +5,7 @@
 
 ## Update
 
-See http://cropMe.mshaffer.com/ for example, demos, and details.
+See http://cropMe.mshaffer.com/ for example, demos, and details.  The website-demo.zip file has all of the files for the demo (including font-awesome and php backend examples of ajax crop, crop-resize, crop-rotate).
 
 1.  A client-side cropping tool should prepare cropping images
 	- The tool should enable the user to manipulate an original image
