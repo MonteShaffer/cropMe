@@ -31,8 +31,10 @@ See http://cropMe.mshaffer.com/ for example, demos, and details.  The website-de
 └── 
 </code></pre>
 
-<a href="https://youtu.be/YEFQhP-AMns" target="_blank">example</a>
-[![cropMe "hello world"](http://img.youtube.com/vi/YEFQhP-AMns/0.jpg)](https://youtu.be/YEFQhP-AMns)
+[YOUTUBE cropMe "hello world"](https://youtu.be/YEFQhP-AMns){:target="_blank"}
+
+
+[![cropMe "hello world"](http://img.youtube.com/vi/YEFQhP-AMns/0.jpg){:target="_blank"}](https://youtu.be/YEFQhP-AMns)
 
 This is a work in progress, and I emphasize "simple" in quotations because there are other packages that claim that, but when you go to customize the platform, they are far from being extensible.
 
