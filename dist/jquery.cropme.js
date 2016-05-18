@@ -398,6 +398,7 @@ if ( typeof Object.create !== 'function' ) {
 			
 			self.currentImage = false;
 			self.finalPrepared = false;
+			self.lastMessage = self.lastMessageAppend = "";
 			
 			self.hasInitialized = false;
 //console.log("READY: " + self.isReady());
@@ -1493,22 +1494,39 @@ if(self.hasBox)
 			
 		doMessage: function ( message , append = false ) {
 			var self = this;
+				// no replicates ... on bindings
+				var _message = message; // original
+				var _append = (!append) ? self.lastMessageAppend : message; // original
 				if(self.options.console.showControls)
 					{
 					var msgInfo = $("#"+self.myID+"-message");
 					var cmessage = msgInfo.html();
-					if(append) { message = cmessage + message; }
-						msgInfo.html(message); 
-						msgInfo.show(); 
-						
-					if(self.options.enable.consoleLog)
+					if(append)
 						{
-						if(cmessage != message)  // no replicates ... 
+						if((self.lastMessageAppend != _append))
 							{
-							console.log(message);
-							}						
+							message = cmessage + message;
+							self.lastMessageAppend = _append;
+							}
+							else
+								{
+								self.lastMessageAppend = _append;
+								return self;
+								}
+						
 						}
+					if((self.lastMessage != _message))
+							{
+							msgInfo.html(message); 
+							msgInfo.show(); 
+							if(self.options.enable.consoleLog)
+								{
+								console.log(message);
+								}
+							} 					
 					}
+					self.lastMessage = message;
+					
 
 				
 			return self;
@@ -1558,6 +1576,7 @@ if(self.hasBox)
 									if(self.maintainAspectRatio || self.forceAspectRatio)
 										{
 										message += " ASPECT RATIO LOCKED";
+										self.toggleRatio("on",false);
 										}
 								break;
 								}
@@ -1620,6 +1639,7 @@ self.doMessage(message);
 									if(self.maintainAspectRatio || self.forceAspectRatio)
 										{
 										message += " ASPECT RATIO LOCKED";
+										self.toggleRatio("on",false);
 										}
 								break;
 								}
@@ -1657,6 +1677,14 @@ self.doMessage(message);
 										self.stopMovePoint(e,d);
 										self.cropVerify();
 										message = "[move-point] ["+d+"] complete! ";
+										if(self.forceAspectRatio)
+											{
+											self.toggleRatio("on",false);
+											}
+											else
+												{
+												self.toggleRatio("off",false);
+												}
 									break;
 									}
 self.doMessage(message);								
@@ -2127,22 +2155,45 @@ console.log("REALLY BAD!")
 			},
 		
 		
-		toggleRatio: function(force=false) {
+		toggleRatio: function(force=false,change=true) {
 			var self = this;
 				var state = self.forceAspectRatio;
 				var toggle = $("#"+self.myID+"-box-toggle-ratio");
 					var t = toggle.find($(".fa"));
 					
-				if(state) // aspect ratio is on, let's turn it off
+				if(!force)
 					{
-					t.removeClass("fa-lock").addClass("fa-unlock");
-					self.forceAspectRatio = false;
-					}
-					else 
+					if(state) // aspect ratio is on, let's turn it off
 						{
-						t.removeClass("fa-unlock").addClass("fa-lock");
-						self.forceAspectRatio = true;
-						}		
+						t.removeClass("fa-lock").addClass("fa-unlock");
+						if(change) { self.forceAspectRatio = false; }
+						t.css({"color": "black"});
+						}
+						else 
+							{
+							t.removeClass("fa-unlock").addClass("fa-lock");
+							if(change) { self.forceAspectRatio = true; }
+							t.css({"color": "red"});
+							}
+					}
+					else
+						{
+						switch(force) 
+							{
+							default:
+							case "on":
+								t.removeClass("fa-unlock").addClass("fa-lock");
+								if(change) { self.forceAspectRatio = true; }
+								t.css({"color": "red"});						
+							break;
+							
+							case "off":
+								t.removeClass("fa-lock").addClass("fa-unlock");
+								if(change) { self.forceAspectRatio = false; }
+								t.css({"color": "black"});
+							break;
+							}
+						}
 			return self;
 			},	
 		togglePoints: function(force=false) {
@@ -2610,7 +2661,8 @@ console.log("smartZoom");
 			var action = $("#"+self.myID+"-image-zoom-in");
 				 action.click(function(e){
 					//e.preventDefault();
-					var zoomIncrement = computeZoomIncrement(self, e);	
+					var zoomIncrement = computeZoomIncrement(self, e);
+							self.doMessage(" ... by a factor of "+zoomIncrement,true);
 						var zoomFactor = self.zoomFactor + zoomIncrement;	
 					var key = "console-click-zoom-in";
 					self.zoomTo(zoomFactor, key);  // this also sets self.zoomFactor
@@ -2622,6 +2674,7 @@ console.log("smartZoom");
 				 action.click(function(e){
 					//e.preventDefault();
 					var zoomIncrement = computeZoomIncrement(self, e);
+						self.doMessage(" ... by a factor of "+zoomIncrement,true);
 						var zoomFactor = self.zoomFactor - zoomIncrement;	
 					var key = "console-click-zoom-out"
 					self.zoomTo(zoomFactor, key);  // this also sets self.zoomFactor
@@ -2700,6 +2753,7 @@ console.log("smartZoom");
 				 action.click(function(e){
 					//e.preventDefault();
 					var moveIncrement = computeMoveIncrement(self, e, "image");
+						self.doMessage(" ... by "+moveIncrement,true);
 						var dX = -1 * moveIncrement;
 						var dY = 0;
 					self.moveDelta(dX,dY,"original"); // original units of image
@@ -2710,6 +2764,7 @@ console.log("smartZoom");
 				 action.click(function(e){
 					//e.preventDefault();
 					var moveIncrement = computeMoveIncrement(self, e, "image");
+						self.doMessage(" ... by "+moveIncrement,true);
 						var dX = 1 * moveIncrement;
 						var dY = 0;
 					self.moveDelta(dX,dY,"original"); // original units of image
@@ -2720,6 +2775,7 @@ console.log("smartZoom");
 				 action.click(function(e){
 					//e.preventDefault();
 					var moveIncrement = computeMoveIncrement(self, e, "image");
+						self.doMessage(" ... by "+moveIncrement,true);
 						var dX = 0;
 						var dY = 1 * moveIncrement;
 					self.moveDelta(dX,dY,"original"); // original units of image
@@ -2730,6 +2786,7 @@ console.log("smartZoom");
 				 action.click(function(e){
 					//e.preventDefault();
 					var moveIncrement = computeMoveIncrement(self, e, "image");
+						self.doMessage(" ... by "+moveIncrement,true);
 						var dX = 0;
 						var dY = -1 * moveIncrement;
 					self.moveDelta(dX,dY,"original"); // original units of image
@@ -2981,6 +3038,7 @@ console.log("smartZoom");
 				 action.click(function(e){
 					//e.preventDefault();
 					var moveIncrement = computeMoveIncrement(self, e, "cropedge");
+						self.doMessage(" ... by "+moveIncrement,true);
 					var data = getDataFromForm(self.myID,"box");
 					var key = "console-move-left-plus";
 						data.x1 += moveIncrement;
@@ -2993,6 +3051,7 @@ console.log("smartZoom");
 				 action.click(function(e){
 					//e.preventDefault();
 					var moveIncrement = computeMoveIncrement(self, e, "cropedge");
+						self.doMessage(" ... by "+moveIncrement,true);
 					var data = getDataFromForm(self.myID,"box");
 					var key = "console-move-left-minus";
 						data.x1 -= moveIncrement;
@@ -3005,6 +3064,7 @@ console.log("smartZoom");
 				 action.click(function(e){
 					//e.preventDefault();
 					var moveIncrement = computeMoveIncrement(self, e, "cropedge");
+						self.doMessage(" ... by "+moveIncrement,true);
 					var data = getDataFromForm(self.myID,"box");
 					var key = "console-move-up-plus";
 						data.y1 += moveIncrement;
@@ -3017,6 +3077,7 @@ console.log("smartZoom");
 				 action.click(function(e){
 					//e.preventDefault();
 					var moveIncrement = computeMoveIncrement(self, e, "cropedge");
+						self.doMessage(" ... by "+moveIncrement,true);
 					var data = getDataFromForm(self.myID,"box");
 					var key = "console-move-up-minus";
 						data.y1 -= moveIncrement;
@@ -3034,6 +3095,7 @@ console.log("smartZoom");
 				 action.click(function(e){
 					//e.preventDefault();
 					var moveIncrement = computeMoveIncrement(self, e, "cropedge");
+						self.doMessage(" ... by "+moveIncrement,true);
 					var data = getDataFromForm(self.myID,"box");
 					var key = "console-move-right-plus";
 						data.x2 += moveIncrement;
@@ -3047,6 +3109,7 @@ console.log("smartZoom");
 				 action.click(function(e){
 					//e.preventDefault();
 					var moveIncrement = computeMoveIncrement(self, e, "cropedge");
+						self.doMessage(" ... by "+moveIncrement,true);
 					var data = getDataFromForm(self.myID,"box");
 					var key = "console-move-right-minus";
 						data.x2 -= moveIncrement;
@@ -3061,6 +3124,7 @@ console.log("smartZoom");
 				 action.click(function(e){
 					//e.preventDefault();
 					var moveIncrement = computeMoveIncrement(self, e, "cropedge");
+						self.doMessage(" ... by "+moveIncrement,true);
 					var data = getDataFromForm(self.myID,"box");
 					var key = "console-move-down-plus";
 						data.y2 += moveIncrement;
@@ -3074,6 +3138,7 @@ console.log("smartZoom");
 				 action.click(function(e){
 					//e.preventDefault();
 					var moveIncrement = computeMoveIncrement(self, e, "cropedge");
+						self.doMessage(" ... by "+moveIncrement,true);
 					var data = getDataFromForm(self.myID,"box");
 					var key = "console-move-down-minus";
 						data.y2 -= moveIncrement;
@@ -3094,6 +3159,7 @@ console.log("smartZoom");
 					if(self.isBoxVisible)
 						{
 						var moveIncrement = computeMoveIncrement(self, e, "crop");
+							self.doMessage(" ... by "+moveIncrement,true);
 							var dX = -1 * moveIncrement;
 							var dY = 0;
 						self.moveBoxDelta(dX,dY,"scaled"); // scaled units of container
@@ -3106,6 +3172,7 @@ console.log("smartZoom");
 					if(self.isBoxVisible)
 						{
 						var moveIncrement = computeMoveIncrement(self, e, "crop");
+							self.doMessage(" ... by "+moveIncrement,true);
 							var dX = 1 * moveIncrement;
 							var dY = 0;
 						self.moveBoxDelta(dX,dY,"scaled"); // scaled units of container
@@ -3119,6 +3186,7 @@ console.log("smartZoom");
 					if(self.isBoxVisible)
 						{
 						var moveIncrement = computeMoveIncrement(self, e, "crop");
+							self.doMessage(" ... by "+moveIncrement,true);
 							var dX = 0;
 							var dY = 1 * moveIncrement;
 						self.moveBoxDelta(dX,dY,"scaled"); // scaled units of container
@@ -3132,6 +3200,7 @@ console.log("smartZoom");
 					if(self.isBoxVisible)
 						{
 						var moveIncrement = computeMoveIncrement(self, e, "crop");
+							self.doMessage(" ... by "+moveIncrement,true);
 							var dX = 0;
 							var dY = -1 * moveIncrement;
 						self.moveBoxDelta(dX,dY,"scaled"); // scaled units of container
@@ -3703,7 +3772,7 @@ onComplete: $.noop,
 	{
 //console.log(" self.maintainAspectRatio: " + self.maintainAspectRatio + " d: " + d);
 			//var ratio = data.w / data.h; // data is changing everytime ... 
-			var ratio = self.movePointRatio;
+			var ratio = self.movePointRatio; // maybe use container or width ratio ?
 //console.log("ratio: " + ratio + " dx: " + dx + " dy: " + dy);
 			if(ratio > 1) { var dx_ = dy * ratio; } else { var dy_ = dx / ratio; }
 			if(ratio > 1) { var _dx = -1*dy * ratio; } else { var _dy = -1*dx / ratio; }
@@ -4026,6 +4095,7 @@ onComplete: $.noop,
 				break;			
 				}
 		var moveIncrement = computeMoveIncrement(self, e, which);
+		self.doMessage(" ... by "+moveIncrement,true);
 		var key = e.which || e.keyCode || 0;
 			switch(key) 
 				{
