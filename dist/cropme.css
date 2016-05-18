@@ -144,10 +144,12 @@
 
 .cropMe-actionable {
 	cursor: pointer;
+	font-size: 100%;
 }
 
 .cropMe-actionable:hover {
 	color: blue;
+	font-size: 150%;
 }
 
 
