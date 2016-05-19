@@ -3,7 +3,7 @@
 <p>A "true" jQuery image cropping plugin.</p>
 </blockquote>
 
-### Released under MIT license ###
+### Released under MIT license [license info](https://opensource.org/licenses/MIT) ###
 
 [Control-Console Depends on Font Awesome] [license info](http://fontawesome.io/license/)
 
