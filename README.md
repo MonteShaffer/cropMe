@@ -1,6 +1,8 @@
 # cropMe
 <blockquote>
 <p>A "true" jQuery image cropping plugin.</p>
+
+[Control-Console Depends on Font Awesome]
 </blockquote>
 
 ### Released under MIT license ###
